@@ -1,32 +1,99 @@
-import React, { useMemo, useState } from "react";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
-import { Slider } from "@/components/ui/slider";
-import { Button } from "@/components/ui/button";
+// ================================
+// README
+// ================================
+// This is a minimal Next.js app you can deploy to Vercel.
+// It contains a single page that renders the Virtual Tour Income Calculator
+// without any third-party UI libs (no shadcn), so deployment is zero‑friction.
+//
+// Steps:
+// 1) Create a new repo and copy these files verbatim.
+// 2) Run: npm i
+// 3) Local test: npm run dev  (open http://localhost:3000)
+// 4) Push to GitHub, import into Vercel, deploy. Done.
+//
+// File tree
+// package.json
+// pages/_app.js
+// pages/index.js
+// components/Calculator.js
+// styles/globals.css
+// .gitignore
 
-// USD helper
-const fmtUSD = (n: number) => new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 }).format(isFinite(n) ? n : 0);
+// ================================
+// package.json
+// ================================
+export const pkg = `{
+  "name": "sumr-calculator",
+  "private": true,
+  "version": "1.0.0",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start"
+  },
+  "dependencies": {
+    "next": "14.2.5",
+    "react": "18.3.1",
+    "react-dom": "18.3.1"
+  }
+}`;
 
-export default function VirtualTourIncomeCalculatorWithTarget() {
-  const [pricePerTour, setPricePerTour] = useState<number>(250);
-  const [hoursPerTour, setHoursPerTour] = useState<number>(1.5);
-  const [targetIncome, setTargetIncome] = useState<number>(3250); // SUMR's job replacement target
+// ================================
+// pages/_app.js
+// ================================
+export const appjs = `import '@/styles/globals.css';
 
-  const [view, setView] = useState<"month" | "week">("month");
-  const [countMonth, setCountMonth] = useState<number>(13);
-  const [countWeek, setCountWeek] = useState<number>(3);
+export default function App({ Component, pageProps }) {
+  return <Component {...pageProps} />;
+}
+`;
 
-  // --- Compare (What-If) feature ---
-  const [showCompare, setShowCompare] = useState<boolean>(false);
-  const [altPricePerTour, setAltPricePerTour] = useState<number>(300);
-  const [altHoursPerTour, setAltHoursPerTour] = useState<number>(1.5);
+// ================================
+// pages/index.js
+// ================================
+export const indexjs = `import Head from 'next/head';
+import Calculator from '@/components/Calculator';
 
-  const weekToMonth = 4.33; // avg weeks per month
+export default function Home() {
+  return (
+    <>
+      <Head>
+        <title>Virtual Tour Income Calculator</title>
+        <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\" />
+      </Head>
+      <main className=\"container\">
+        <Calculator />
+      </main>
+    </>
+  );
+}
+`;
+
+// ================================
+// components/Calculator.js
+// ================================
+export const calculator = `import { useMemo, useState } from 'react';
+
+const fmtUSD = (n) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(isFinite(n) ? n : 0);
+
+export default function Calculator() {
+  const [pricePerTour, setPricePerTour] = useState(250);
+  const [hoursPerTour, setHoursPerTour] = useState(1.5);
+  const [targetIncome, setTargetIncome] = useState(3250);
+
+  const [view, setView] = useState('month'); // 'month' | 'week'
+  const [countMonth, setCountMonth] = useState(13);
+  const [countWeek, setCountWeek] = useState(3);
+
+  // Compare (What‑If)
+  const [showCompare, setShowCompare] = useState(false);
+  const [altPricePerTour, setAltPricePerTour] = useState(300);
+  const [altHoursPerTour, setAltHoursPerTour] = useState(1.5);
+
+  const weekToMonth = 4.33;
 
   const monthly = useMemo(() => {
-    const tours = view === "month" ? countMonth : Math.round(countWeek * weekToMonth);
+    const tours = view === 'month' ? countMonth : Math.round(countWeek * weekToMonth);
     const revenue = tours * pricePerTour;
     const hours = tours * hoursPerTour;
     const weeklyEquivalent = tours / weekToMonth;
@@ -34,23 +101,23 @@ export default function VirtualTourIncomeCalculatorWithTarget() {
   }, [view, countMonth, countWeek, pricePerTour, hoursPerTour]);
 
   const weekly = useMemo(() => {
-    const tours = view === "week" ? countWeek : Math.round(countMonth / weekToMonth);
+    const tours = view === 'week' ? countWeek : Math.round(countMonth / weekToMonth);
     const revenue = tours * pricePerTour;
     const hours = tours * hoursPerTour;
     const monthlyEquivalent = tours * weekToMonth;
     return { tours, revenue, hours, monthlyEquivalent };
   }, [view, countMonth, countWeek, pricePerTour, hoursPerTour]);
 
-  // Compare (alt) calculations reuse the SAME tour counts as active view
+  // Compare uses the SAME tour counts as active view
   const altMonthly = useMemo(() => {
-    const tours = view === "month" ? countMonth : Math.round(countWeek * weekToMonth);
+    const tours = view === 'month' ? countMonth : Math.round(countWeek * weekToMonth);
     const revenue = tours * altPricePerTour;
     const hours = tours * altHoursPerTour;
     return { tours, revenue, hours };
   }, [view, countMonth, countWeek, altPricePerTour, altHoursPerTour]);
 
   const altWeekly = useMemo(() => {
-    const tours = view === "week" ? countWeek : Math.round(countMonth / weekToMonth);
+    const tours = view === 'week' ? countWeek : Math.round(countMonth / weekToMonth);
     const revenue = tours * altPricePerTour;
     const hours = tours * altHoursPerTour;
     return { tours, revenue, hours };
@@ -58,221 +125,203 @@ export default function VirtualTourIncomeCalculatorWithTarget() {
 
   const toursNeededForTarget = useMemo(() => {
     const needed = targetIncome / Math.max(pricePerTour, 1);
-    return {
-      month: needed,
-      week: needed / weekToMonth,
-    };
+    return { month: needed, week: needed / weekToMonth };
   }, [targetIncome, pricePerTour]);
 
   const toursNeededForTargetAlt = useMemo(() => {
     const needed = targetIncome / Math.max(altPricePerTour, 1);
-    return {
-      month: needed,
-      week: needed / weekToMonth,
-    };
+    return { month: needed, week: needed / weekToMonth };
   }, [targetIncome, altPricePerTour]);
 
   const percentToTarget = useMemo(() => {
-    const revenue = view === "month" ? monthly.revenue : weekly.revenue;
-    const target = view === "month" ? targetIncome : targetIncome / weekToMonth;
+    const revenue = view === 'month' ? monthly.revenue : weekly.revenue;
+    const target = view === 'month' ? targetIncome : targetIncome / weekToMonth;
     return Math.max(0, Math.min(1, revenue / Math.max(target, 1)));
   }, [view, monthly.revenue, weekly.revenue, targetIncome]);
 
-  const handleSlider = (v: number[]) => {
-    const val = v[0] ?? 0;
-    if (view === "month") setCountMonth(val);
-    else setCountWeek(val);
-  };
+  const isHit = (view === 'month' ? monthly.revenue : weekly.revenue) >= (view === 'month' ? targetIncome : targetIncome / weekToMonth);
 
-  const isHit = (view === "month" ? monthly.revenue : weekly.revenue) >= (view === "month" ? targetIncome : targetIncome / weekToMonth);
+  const sliderMax = view === 'month' ? 60 : 20;
+  const count = view === 'month' ? countMonth : countWeek;
+  const setCount = view === 'month' ? setCountMonth : setCountWeek;
 
   return (
-    <div className="mx-auto max-w-3xl p-6 space-y-6">
-      <div className="space-y-1">
-        <h1 className="text-2xl font-semibold">Virtual Tour Income Calculator</h1>
-        <p className="text-sm text-muted-foreground">Slide the number of tours and see revenue & hours. Set a replacement income target and we’ll highlight when you hit it.</p>
-      </div>
+    <div className=\"stack\">
+      <header className=\"stack-sm\">
+        <h1>Virtual Tour Income Calculator</h1>
+        <p className=\"muted\">Slide the number of tours and see revenue & hours. Set a replacement income target and we’ll highlight when you hit it.</p>
+      </header>
 
       {/* Assumptions */}
-      <Card className="shadow-lg">
-        <CardHeader>
-          <CardTitle>Assumptions</CardTitle>
-        </CardHeader>
-        <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
-          <div className="space-y-2">
-            <Label htmlFor="price">Average price per tour ($)</Label>
-            <Input id="price" type="number" inputMode="decimal" step="25" min="0" value={pricePerTour} onChange={(e) => setPricePerTour(Number(e.target.value) || 0)} />
+      <section className=\"card\">
+        <h2>Assumptions</h2>
+        <div className=\"grid-3\">
+          <div className=\"stack-xxs\">
+            <label>Average price per tour ($)</label>
+            <input type=\"number\" step=\"25\" min=\"0\" value={pricePerTour} onChange={(e) => setPricePerTour(Number(e.target.value) || 0)} />
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="hours">Average time per tour (hours)</Label>
-            <Input id="hours" type="number" inputMode="decimal" step="0.25" min="0" value={hoursPerTour} onChange={(e) => setHoursPerTour(Number(e.target.value) || 0)} />
+          <div className=\"stack-xxs\">
+            <label>Average time per tour (hours)</label>
+            <input type=\"number\" step=\"0.25\" min=\"0\" value={hoursPerTour} onChange={(e) => setHoursPerTour(Number(e.target.value) || 0)} />
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="target">Job replacement target ({view === 'month' ? 'per month' : 'per week'})</Label>
-            <Input
-              id="target"
-              type="number"
-              inputMode="decimal"
-              step="50"
-              min="0"
-              value={view === 'month' ? targetIncome : Math.round(targetIncome / weekToMonth)}
-              onChange={(e) => {
-                const val = Number(e.target.value) || 0;
-                setTargetIncome(view === 'month' ? val : Math.round(val * weekToMonth));
-              }}
-            />
+          <div className=\"stack-xxs\">
+            <label>Job replacement target ({view === 'month' ? 'per month' : 'per week'})</label>
+            <input type=\"number\" step=\"50\" min=\"0\" value={view === 'month' ? targetIncome : Math.round(targetIncome / weekToMonth)} onChange={(e) => {
+              const val = Number(e.target.value) || 0;
+              setTargetIncome(view === 'month' ? val : Math.round(val * weekToMonth));
+            }} />
           </div>
+        </div>
 
-          {/* Compare toggle and inputs (kept minimal, no layout change) */}
-          <div className="md:col-span-3 space-y-3">
-            <Button variant="outline" onClick={() => setShowCompare((v) => !v)}>
-              {showCompare ? "Hide Compare" : "Show Compare"}
-            </Button>
-            {showCompare && (
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
-                <div className="space-y-2">
-                  <Label htmlFor="alt-price">Compare price ($)</Label>
-                  <Input id="alt-price" type="number" inputMode="decimal" step="25" min="0" value={altPricePerTour} onChange={(e) => setAltPricePerTour(Number(e.target.value) || 0)} />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="alt-hours">Compare time (hours)</Label>
-                  <Input id="alt-hours" type="number" inputMode="decimal" step="0.25" min="0" value={altHoursPerTour} onChange={(e) => setAltHoursPerTour(Number(e.target.value) || 0)} />
-                </div>
-                <div className="space-y-2 text-sm text-muted-foreground">
-                  <div>Target at compare price:</div>
-                  <div>
-                    {Math.ceil(toursNeededForTargetAlt.month)} tours/month · {Math.ceil(toursNeededForTargetAlt.week)} tours/week
-                  </div>
-                </div>
+        {/* Compare toggle */}
+        <div className=\"stack-xs\">
+          <button className=\"btn-outline\" onClick={() => setShowCompare(v => !v)}>{showCompare ? 'Hide Compare' : 'Show Compare'}</button>
+          {showCompare && (
+            <div className=\"grid-3\">
+              <div className=\"stack-xxs\">
+                <label>Compare price ($)</label>
+                <input type=\"number\" step=\"25\" min=\"0\" value={altPricePerTour} onChange={(e) => setAltPricePerTour(Number(e.target.value) || 0)} />
               </div>
-            )}
-          </div>
-        </CardContent>
-      </Card>
+              <div className=\"stack-xxs\">
+                <label>Compare time (hours)</label>
+                <input type=\"number\" step=\"0.25\" min=\"0\" value={altHoursPerTour} onChange={(e) => setAltHoursPerTour(Number(e.target.value) || 0)} />
+              </div>
+              <div className=\"muted\" style={{alignSelf:'end'}}>
+                Target at compare price: {Math.ceil(toursNeededForTargetAlt.month)} tours/month · {Math.ceil(toursNeededForTargetAlt.week)} tours/week
+              </div>
+            </div>
+          )}
+        </div>
+      </section>
 
       {/* Tabs */}
-      <Tabs value={view} onValueChange={(v) => setView(v as any)}>
-        <TabsList className="grid grid-cols-2 w-full">
-          <TabsTrigger value="month">Listings per Month</TabsTrigger>
-          <TabsTrigger value="week">Listings per Week</TabsTrigger>
-        </TabsList>
+      <section className=\"tabs\">
+        <div className=\"tablist\">
+          <button className={view==='month'?'tab active':'tab'} onClick={()=>setView('month')}>Listings per Month</button>
+          <button className={view==='week'?'tab active':'tab'} onClick={()=>setView('week')}>Listings per Week</button>
+        </div>
 
-        {/* MONTH VIEW */}
-        <TabsContent value="month" className="space-y-4">
-          <Card className={"shadow-lg border " + (isHit ? "border-green-500" : "") }>
-            <CardHeader>
-              <CardTitle>Listings per Month</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              {/* Slider */}
-              <div>
-                <div className="flex items-center justify-between mb-2">
-                  <Label htmlFor="month-slider">Tours this month</Label>
-                  <div className="text-lg font-semibold">{countMonth}</div>
-                </div>
-                <Slider id="month-slider" min={0} max={60} step={1} value={[countMonth]} onValueChange={handleSlider} />
+        <div className=\"card stack\">
+          {/* Slider */}
+          <div className=\"stack-xxs\">
+            <div className=\"row\">
+              <label>Tours per {view}</label>
+              <div className=\"value\">{count}</div>
+            </div>
+            <input type=\"range\" min=\"0\" max={sliderMax} step=\"1\" value={count} onChange={(e)=>setCount(Number(e.target.value)||0)} />
+          </div>
+
+          {/* Stats */}
+          {view==='month' ? (
+            <div className=\"grid-3\">
+              <StatBox label=\"Monthly Revenue\" value={fmtUSD(monthly.revenue)} sub={\`(${pricePerTour} × ${monthly.tours})\`} />
+              <StatBox label=\"Monthly Hours\" value={\`${monthly.hours.toFixed(1)} hrs\`} sub={\`(${hoursPerTour} × ${monthly.tours})\`} />
+              <StatBox label=\"Tours Needed for Target\" value={\`${Math.ceil(toursNeededForTarget.month)} tours\`} sub={\`Target ${fmtUSD(targetIncome)}\`} />
+            </div>
+          ) : (
+            <div className=\"grid-3\">
+              <StatBox label=\"Weekly Revenue\" value={fmtUSD(weekly.revenue)} sub={\`(${pricePerTour} × ${weekly.tours})\`} />
+              <StatBox label=\"Weekly Hours\" value={\`${weekly.hours.toFixed(1)} hrs\`} sub={\`(${hoursPerTour} × ${weekly.tours})\`} />
+              <StatBox label=\"Tours Needed for Target\" value={\`${Math.ceil(toursNeededForTarget.week)} tours/wk\`} sub={\`Target ${fmtUSD(Math.round(targetIncome / weekToMonth))}/wk\`} />
+            </div>
+          )}
+
+          {/* Compare panels */}
+          {showCompare && (
+            view==='month' ? (
+              <div className=\"grid-3\">
+                <StatBox label=\"Monthly Revenue (Compare)\" value={fmtUSD(altMonthly.revenue)} sub={\`(${altPricePerTour} × ${altMonthly.tours})\`} />
+                <StatBox label=\"Monthly Hours (Compare)\" value={\`${altMonthly.hours.toFixed(1)} hrs\`} sub={\`(${altHoursPerTour} × ${altMonthly.tours})\`} />
+                <StatBox label=\"Tours Needed (Compare)\" value={\`${Math.ceil(toursNeededForTargetAlt.month)} tours\`} sub={\`Target ${fmtUSD(targetIncome)}\`} />
               </div>
-
-              {/* Stats */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <StatBox label="Monthly Revenue" value={fmtUSD(monthly.revenue)} sub={`(${pricePerTour} × ${monthly.tours})`} />
-                <StatBox label="Monthly Hours" value={`${monthly.hours.toFixed(1)} hrs`} sub={`(${hoursPerTour} × ${monthly.tours})`} />
-                <StatBox label="Tours Needed for Target" value={`${Math.ceil(toursNeededForTarget.month)} tours`} sub={`Target ${fmtUSD(targetIncome)}`} />
+            ) : (
+              <div className=\"grid-3\">
+                <StatBox label=\"Weekly Revenue (Compare)\" value={fmtUSD(altWeekly.revenue)} sub={\`(${altPricePerTour} × ${altWeekly.tours})\`} />
+                <StatBox label=\"Weekly Hours (Compare)\" value={\`${altWeekly.hours.toFixed(1)} hrs\`} sub={\`(${altHoursPerTour} × ${altWeekly.tours})\`} />
+                <StatBox label=\"Tours Needed (Compare)\" value={\`${Math.ceil(toursNeededForTargetAlt.week)} tours/wk\`} sub={\`Target ${fmtUSD(Math.round(targetIncome / weekToMonth))}/wk\`} />
               </div>
+            )
+          )}
 
-              {/* Compare panel (monthly) */}
-              {showCompare && (
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <StatBox label="Monthly Revenue (Compare)" value={fmtUSD(altMonthly.revenue)} sub={`(${altPricePerTour} × ${altMonthly.tours})`} />
-                  <StatBox label="Monthly Hours (Compare)" value={`${altMonthly.hours.toFixed(1)} hrs`} sub={`(${altHoursPerTour} × ${altMonthly.tours})`} />
-                  <StatBox label="Tours Needed (Compare)" value={`${Math.ceil(toursNeededForTargetAlt.month)} tours`} sub={`Target ${fmtUSD(targetIncome)}`} />
-                </div>
-              )}
+          {/* Progress */}
+          <TargetProgress percent={percentToTarget} hit={isHit} label={view==='month' ? 'Progress to monthly target' : 'Progress to weekly target'} />
+        </div>
+      </section>
 
-              {/* Progress to Target */}
-              <TargetProgress percent={percentToTarget} hit={isHit} label="Progress to monthly target" />
-
-              {isHit && (
-                <div className="rounded-xl border bg-green-50 p-3 text-green-800 text-sm">🎉 You hit (or exceeded) the monthly target of {fmtUSD(targetIncome)}.</div>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        {/* WEEK VIEW */}
-        <TabsContent value="week" className="space-y-4">
-          <Card className={"shadow-lg border " + (isHit ? "border-green-500" : "") }>
-            <CardHeader>
-              <CardTitle>Listings per Week</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              {/* Slider */}
-              <div>
-                <div className="flex items-center justify-between mb-2">
-                  <Label htmlFor="week-slider">Tours per week</Label>
-                  <div className="text-lg font-semibold">{countWeek}</div>
-                </div>
-                <Slider id="week-slider" min={0} max={20} step={1} value={[countWeek]} onValueChange={handleSlider} />
-              </div>
-
-              {/* Stats */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <StatBox label="Weekly Revenue" value={fmtUSD(weekly.revenue)} sub={`(${pricePerTour} × ${weekly.tours})`} />
-                <StatBox label="Weekly Hours" value={`${weekly.hours.toFixed(1)} hrs`} sub={`(${hoursPerTour} × ${weekly.tours})`} />
-                <StatBox label="Tours Needed for Target" value={`${Math.ceil(toursNeededForTarget.week)} tours/wk`} sub={`Target ${fmtUSD(Math.round(targetIncome / weekToMonth))}/wk`} />
-              </div>
-
-              {/* Compare panel (weekly) */}
-              {showCompare && (
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <StatBox label="Weekly Revenue (Compare)" value={fmtUSD(altWeekly.revenue)} sub={`(${altPricePerTour} × ${altWeekly.tours})`} />
-                  <StatBox label="Weekly Hours (Compare)" value={`${altWeekly.hours.toFixed(1)} hrs`} sub={`(${altHoursPerTour} × ${altWeekly.tours})`} />
-                  <StatBox label="Tours Needed (Compare)" value={`${Math.ceil(toursNeededForTargetAlt.week)} tours/wk`} sub={`Target ${fmtUSD(Math.round(targetIncome / weekToMonth))}/wk`} />
-                </div>
-              )}
-
-              {/* Progress to Target */}
-              <TargetProgress percent={percentToTarget} hit={isHit} label="Progress to weekly target" />
-
-              {isHit && (
-                <div className="rounded-xl border bg-green-50 p-3 text-green-800 text-sm">🎉 You hit (or exceeded) the weekly target.</div>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
-
-      <Card className="shadow-md">
-        <CardContent className="p-4 text-sm text-muted-foreground">
-          At ${pricePerTour}/tour, you need approximately {toursNeededForTarget.month.toFixed(1)} tours/month ({toursNeededForTarget.week.toFixed(1)} per week) to reach a target of {fmtUSD(targetIncome)}.
-        </CardContent>
-      </Card>
+      <section className=\"card\">
+        <div className=\"muted\">At {fmtUSD(pricePerTour)}/tour, you need approximately {toursNeededForTarget.month.toFixed(1)} tours/month ({toursNeededForTarget.week.toFixed(1)} per week) to reach {fmtUSD(targetIncome)}.</div>
+      </section>
     </div>
   );
 }
 
-
-function StatBox({ label, value, sub }: { label: string; value: string; sub?: string }) {
+function StatBox({ label, value, sub }) {
   return (
-    <div className="rounded-2xl border p-4 shadow-sm">
-      <div className="text-xs uppercase tracking-wide text-muted-foreground">{label}</div>
-      <div className="mt-1 text-2xl font-semibold">{value}</div>
-      {sub ? <div className="mt-1 text-xs text-muted-foreground">{sub}</div> : null}
+    <div className=\"stat\">
+      <div className=\"stat-label\">{label}</div>
+      <div className=\"stat-value\">{value}</div>
+      {sub ? <div className=\"stat-sub\">{sub}</div> : null}
     </div>
   );
 }
 
-function TargetProgress({ percent, hit, label }: { percent: number; hit: boolean; label: string }) {
+function TargetProgress({ percent, hit, label }) {
   const pct = Math.round(percent * 100);
   return (
-    <div className="space-y-2">
-      <div className="flex items-center justify-between text-xs text-muted-foreground">
+    <div className=\"stack-xxs\">
+      <div className=\"row small muted\">
         <span>{label}</span>
         <span>{pct}%</span>
       </div>
-      <div className="w-full h-3 rounded-full border overflow-hidden">
-        <div style={{ width: `${Math.min(100, Math.max(0, pct))}%`, background: hit ? "#22c55e" : "#94a3b8" }} className="h-full" />
+      <div className=\"bar\">
+        <div className=\"bar-fill\" style={{ width: \`${Math.min(100, Math.max(0, pct))}%\", background: hit ? '#22c55e' : '#94a3b8' }} />
       </div>
     </div>
   );
 }
+`;
+
+// ================================
+// styles/globals.css
+// ================================
+export const css = `:root{ --border:#e5e7eb; --muted:#6b7280; }
+*{ box-sizing:border-box }
+body{ font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial; margin:0; color:#111827; background:#fff }
+.container{ max-width:900px; margin:0 auto; padding:24px }
+.stack>*+*{ margin-top:24px }
+.stack-sm>*+*{ margin-top:12px }
+.stack-xs>*+*{ margin-top:8px }
+.stack-xxs>*+*{ margin-top:6px }
+.row{ display:flex; align-items:center; justify-content:space-between }
+.row.small{ font-size:12px }
+.muted{ color:var(--muted) }
+.card{ border:1px solid var(--border); border-radius:12px; padding:16px; box-shadow: 0 1px 2px rgba(0,0,0,.04) }
+.tabs{ }
+.tablist{ display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:8px }
+.tab{ border:1px solid var(--border); padding:8px 12px; border-radius:8px; background:#fff }
+.tab.active{ background:#f3f4f6; font-weight:600 }
+.grid-3{ display:grid; grid-template-columns:repeat(3, minmax(0,1fr)); gap:12px }
+@media (max-width: 768px){ .grid-3{ grid-template-columns:1fr } }
+.stat{ border:1px solid var(--border); border-radius:12px; padding:12px }
+.stat-label{ font-size:12px; text-transform:uppercase; letter-spacing:.04em; color:var(--muted) }
+.stat-value{ font-size:22px; font-weight:700; margin-top:6px }
+.stat-sub{ font-size:12px; color:var(--muted); margin-top:4px }
+.value{ font-weight:600 }
+.bar{ height:12px; border:1px solid var(--border); border-radius:8px; overflow:hidden }
+.bar-fill{ height:100% }
+.btn-outline{ background:#fff; border:1px solid var(--border); border-radius:8px; padding:8px 12px; cursor:pointer }
+.btn-outline:hover{ background:#f9fafb }
+label{ font-size:12px; color:var(--muted) }
+input[type='number']{ width:100%; padding:8px 10px; border:1px solid var(--border); border-radius:8px }
+input[type='range']{ width:100% }
+`;
+
+// ================================
+// .gitignore
+// ================================
+export const gitignore = `node_modules
+.next
+.DS_Store
+.env
+`;
+
